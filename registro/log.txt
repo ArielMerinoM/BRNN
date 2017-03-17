@@ -1,0 +1,4 @@
+epoca	fold	error[prom MSE]	tiempo[s]
+0	0	3533.9539165039	7
+epoca	fold	error[prom MSE]	tiempo[s]
+0	0	3537.008835274	7

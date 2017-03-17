@@ -54,13 +54,12 @@ print(#viajes)
 
 viajesX = {}
 viajesY = {}
-
+datosV = {}
 for i = 1, #viajes do
 	x = {}
 	y = {}
 	D = viajes[i][#(viajes[i])-1][2]
 	T = viajes[i][#(viajes[i])-1][1]
-	print(D,T)
 	for j = 1, #viajes[i] - 3 do
 		dd = viajes[i][j][1]/D
 		d = viajes[i][j][2]/D
@@ -73,31 +72,68 @@ for i = 1, #viajes do
 	end
 	table.insert(viajesX, x)
 	table.insert(viajesY, y)
+	table.insert(datosV, viajes[i][#viajes[i]])
 end
 
 viajes = nil
 collectgarbage()
 
---[[
---hasta aqui vamos super bien !!!
+--generacion de los datos de validacion
 
---creacion de los folds
-foldsX = {}
-foldsY = {}
 
-for i = 1, 11 do
-	table.insert(foldsX, {})
-	table.insert(foldsY, {})
-	for j = 1, 1396 do
-		eleccion = choice(viajesX, viajesY)
-		table.insert(foldsX[i], eleccion[1])
-		table.insert(foldsY[i], eleccion[2])
-		eleccion = {}
+archivo_validacion = io.open('./conjunto_validacion.txt','r')
+validacionX = {}
+validacionY = {}
+
+for i = 1, 3002 do
+	linea = archivo_validacion:read()
+	linea = split(linea,'\t')
+	linea[1] = tonumber(linea[1])
+	linea[2] = tonumber(linea[2])
+	linea[3] = tonumber(linea[3])
+	linea[4] = tonumber(linea[4])
+	linea[5] = tonumber(linea[5])
+	for j = 1, #datosV do
+		if linea[1] == datosV[j][1] and linea[2] == datosV[j][2] and linea[3] == datosV[j][3] and linea[4] == datosV[j][4] and linea[5] == datosV[j][5] then
+			table.insert(validacionX, viajesX[j])
+			table.insert(validacionY, viajesY[j])
+			table.remove(viajesX, j)
+			table.remove(viajesY, j)
+			table.remove(datosV, j)
+			break
+		end
 	end
 end
 
-validacionX = table.remove(foldsX, 11)
-validacionY = table.remove(foldsY, 11)
+datosV = nil
+collectgarbage()
+
+--creacion de los folds
+foldsX = {{},{},{},{},{},{},{},{},{},{}}
+foldsY = {{},{},{},{},{},{},{},{},{},{}}
+
+while #viajesX > 0 do
+	for i = 1, 10 do
+		if #viajesX > 0 then
+			indice = math.random(#viajesX)
+			table.insert(foldsX[i], viajesX[indice])
+			table.insert(foldsY[i], viajesY[indice])
+			table.remove(viajesX, indice)
+			table.remove(viajesY, indice)
+		else
+			break
+		end
+
+	end
+end
+
+viajesX = nil
+viajesY = nil
+collectgarbage()
+
+for i = 1, #foldsX do
+	print(#foldsX[i])
+end
 
 
 --hasta este punto, foldsX y foldsY contienen los datos de entrenamiento
@@ -109,6 +145,7 @@ bwd = nn.LSTM(4,100,rho)
 brnn = nn.BRNN(fwd,bwd)
 red = nn.Sequential()
 red:add(brnn)
+red:add(nn.Linear(100,100))
 red:add(nn.Linear(100,100))
 red:add(nn.Linear(100,1))
 
@@ -150,7 +187,7 @@ for epoca = 1, epocas do
 		--entrenamiento con el fold i
 		for j = 1, #(foldsX[i]) do --todos los casos en un fold
 			os.execute('clear')
-			print('avance general: '.. math.floor(100 * (epoca - 1) / epocas) .. "%")
+			print('epoca:',epoca)
 			print('fold: '..i..' - avance: '..math.floor(100*j/#(foldsY[i])).."%")
 			print('tiempo transcurrido: '..os.time() - tiempo0..'s')
 			print('MSE promedio: '..errPromedio)
@@ -171,7 +208,7 @@ for epoca = 1, epocas do
 			end
 		end
 		os.execute('clear')
-		print('avance general: '.. math.floor(100 * (epoca - 1) / epocas) .. "%")
+		print('epoca:',epoca)
 		print('fold: '..i..' - avance: '.."100%")
 		print('tiempo transcurrido: '..os.time() - tiempo0..'s')
 		print('Guardando...')
@@ -200,5 +237,3 @@ end
 os.execute('clear')
 print('avance general: 100%')
 print('entrenamiento terminado')
-
-]]
