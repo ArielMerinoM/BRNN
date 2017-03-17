@@ -1,7 +1,7 @@
 require 'rnn'
 require 'math'
 require 'funciones'
-require 'rnn'
+require 'brnn'
 
 --DECLARACION DE VARIABLES
 
@@ -14,7 +14,7 @@ epocas = 100
 --esta es la parte que hay que generalizar ***
 carpetas = {'../Datos procesados/semana/','../Datos procesados/viernes/'}
 archivos = {'03-MARZO','04-ABRIL','05-MAYO','06-JUNIO','07-JULIO','08-AGOSTO','09-SEPTIEMBRE','10-OCTUBRE','11-NOVIEMBRE','12-DICIEMBRE'}
-
+FERIADOS = {{1,1},{2,2},{4,3},{4,21},{5,1},{9,7},{10,12},{11,2},{12,25}}
 
 viajes = {}
 
@@ -26,13 +26,17 @@ for carpeta = 1, 2 do
 		linea = entrada:read()
 		while linea ~= nil do
 			linea = split(linea,'\t')
-			
 			if linea[1] == 'F' then
 				T = 3600 * tonumber(linea[5]) + 60 * tonumber(linea[6]) + tonumber(linea[7])
 				D = tonumber(linea[9])
-				info = 
+				info = {tonumber(linea[2]),tonumber(linea[3]),tonumber(linea[5]),tonumber(linea[6]),tonumber(linea[7])} --dia, mes, hora, minuto, segundo
 				table.insert(viaje,{T,D})
-				table.insert(viajes, viaje)
+				table.insert(viaje, info)
+				if #viaje <= 93 then --filtro de los 90 minutos
+					if not feriado(FERIADOS, info[1], info[2]) then --filtro feriados
+						table.insert(viajes, viaje)
+					end
+				end
 				viaje = {}
 			else
 				dd = tonumber(linea[1])
@@ -40,14 +44,13 @@ for carpeta = 1, 2 do
 				t = tonumber(linea[4])
 				table.insert(viaje, {dd, d, t})
 			end
-
 			linea = entrada:read()
 		end
 		entrada:close()
 	end
 end
---hasta aqui ***
 
+print(#viajes)
 
 viajesX = {}
 viajesY = {}
@@ -55,17 +58,18 @@ viajesY = {}
 for i = 1, #viajes do
 	x = {}
 	y = {}
-	D = viajes[i][#(viajes[i])][2]
-	T = viajes[i][#(viajes[i])][1]
-	for j = 1, #viajes[i] - 2 do
+	D = viajes[i][#(viajes[i])-1][2]
+	T = viajes[i][#(viajes[i])-1][1]
+	print(D,T)
+	for j = 1, #viajes[i] - 3 do
 		dd = viajes[i][j][1]/D
 		d = viajes[i][j][2]/D
 		t = (viajes[i][j][3] + T)/86400
 		t0 = T/86400
-		table.insert(x, {t0, t, dd, d})
-		ddtm1 = viajes[i][j+1][1]/D
-		table.insert(y, ddtm1*1000) --el objetivo es adivinar el delta D de un minuto en el futuro
-		--los resultados son amplificados x1000 para mayor presicion 
+		table.insert(x, {t0, t, d, dd})
+		dtm1 = viajes[i][j+1][2]/D
+		table.insert(y, dtm1*100) --el objetivo es adivinar el porcentaje de avance en el tiempo t+1
+		--los resultados son amplificados x100 para obtener una medida porcentual
 	end
 	table.insert(viajesX, x)
 	table.insert(viajesY, y)
@@ -74,6 +78,7 @@ end
 viajes = nil
 collectgarbage()
 
+--[[
 --hasta aqui vamos super bien !!!
 
 --creacion de los folds
@@ -196,3 +201,4 @@ os.execute('clear')
 print('avance general: 100%')
 print('entrenamiento terminado')
 
+]]

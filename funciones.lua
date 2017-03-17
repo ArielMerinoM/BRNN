@@ -41,3 +41,12 @@ function shuffle(tabla1, tabla2)
 		table.insert(tabla2, elemento2)
 	end
 end
+
+function feriado(tabla, dia, mes)
+    for t = 1, #tabla do
+        if tabla[t][1] == mes and tabla[t][2] == dia then
+            return true
+        end
+    end
+    return false
+end
