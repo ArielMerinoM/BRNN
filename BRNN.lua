@@ -66,7 +66,7 @@ for i = 1, #viajes do
 		t = (viajes[i][j][3] + T)/86400
 		t0 = T/86400
 		table.insert(x, {t0, t, d, dd})
-		dtm1 = viajes[i][j+1][2]/D
+		dtm1 = viajes[i][j+1][1]/D
 		table.insert(y, dtm1*100) --el objetivo es adivinar el porcentaje de avance en el tiempo t+1
 		--los resultados son amplificados x100 para obtener una medida porcentual
 	end
